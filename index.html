@@ -154,21 +154,35 @@
 <div id="modalRoot"></div>
 
 <script>
+const DB_URL = "https://peadstrack-default-rtdb.firebaseio.com/"; 
+
 const TARGET = 75;
 const BR_PIN = '551555';
 function genPin(){ return String(Math.floor(1000 + Math.random()*9000)); }
+
+// Pre-seeded with your custom names & secure student PINs!
 const SEED_STUDENTS = [
-  {roll:'11', name:'Amna Khalid'}, {roll:'54', name:'Fatima Shahid'},
-  {roll:'75', name:'Iman Ahmad'}, {roll:'76', name:'Inshrah Qureshi'},
-  {roll:'77', name:'Iqra Amir'}, {roll:'78', name:'Ishmal Fatima Shahid'},
-  {roll:'95', name:'Maham Ashraf'}, {roll:'111', name:'Nabiha Tahir'},
-  {roll:'120', name:'Rahmeen Nauman'}, {roll:'158', name:'Abdullah Khan'},
-  {roll:'161', name:'Abdur Rahman'}, {roll:'162', name:'Adil Hameed'},
-  {roll:'180', name:'Awais Nazir'}, {roll:'196', name:'Hasnat Ahmed Liaquat'},
-  {roll:'241', name:'Muhammad Faisal Zaheer'}, {roll:'245', name:'Muhammad Haad Munir Chaudhry'},
-  {roll:'247', name:'Muhammad Hamza Naseer Awan'}, {roll:'267', name:'Muhammad Shaafay Khan'},
-  {roll:'286', name:'Muhammad Waleed Abdullah'}, {roll:'293', name:'Omar Abdullah Gill'},
-  {roll:'348', name:'Azmir Ali Khan'}
+  {roll:'11', name:'Amna Khalid', pin:'8033'}, 
+  {roll:'54', name:'Fatima Shahid', pin:'8341'},
+  {roll:'75', name:'Iman Ahmad', pin:'2677'}, 
+  {roll:'76', name:'Inshrah Qureshi', pin:'1410'},
+  {roll:'77', name:'Iqra Amir', pin:'9016'}, 
+  {roll:'78', name:'Ishmal Fatima Shahid', pin:'5829'},
+  {roll:'95', name:'Maham Ashraf', pin:'7199'}, 
+  {roll:'111', name:'Nabiha Tahir', pin:'4193'},
+  {roll:'120', name:'Rahmeen Nauman', pin:'5611'}, 
+  {roll:'158', name:'Abdullah Khan', pin:'6655'},
+  {roll:'161', name:'Abdur Rahman', pin:'3040'}, 
+  {roll:'162', name:'Adil Hameed', pin:'3559'},
+  {roll:'180', name:'Awais Nazir', pin:'9915'}, 
+  {roll:'196', name:'Hasnat Ahmed Liaquat', pin:'6300'},
+  {roll:'241', name:'Muhammad Faisal Zaheer', pin:'2904'}, 
+  {roll:'245', name:'Muhammad Haad Munir Chaudhry', pin:'4980'},
+  {roll:'247', name:'Muhammad Hamza Naseer Awan', pin:'5380'}, 
+  {roll:'267', name:'Muhammad Shaafay Khan', pin:'4550'},
+  {roll:'286', name:'Muhammad Waleed Abdullah', pin:'8065'}, 
+  {roll:'293', name:'Omar Abdullah Gill', pin:'8185'},
+  {roll:'348', name:'Azmir Ali Khan', pin:'1373'}
 ];
 
 let students = [];
@@ -178,17 +192,39 @@ let editorDraft = null;
 let selectedStudent = null;
 let unlockedRoll = null;
 let calCursor = new Date();
-let casePresenter = null; // {roll, topic}
+let casePresenter = null;
 
-// ---------- storage helpers ----------
+// ---------- Firebase API helpers ----------
+async function dbFetch(path) {
+  try {
+    const res = await fetch(`${DB_URL}${path}.json`);
+    return await res.json();
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+async function dbPut(path, data) {
+  try {
+    await fetch(`${DB_URL}${path}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ---------- Live storage helpers ----------
 async function loadAll(){
-  let rosterExisted = true;
-  try{ const r = await window.storage.get('roster', true); students = r ? JSON.parse(r.value) : []; }
-  catch(e){ students = []; rosterExisted = false; }
-  if(!rosterExisted){
-    students = SEED_STUDENTS.map(s=>({...s, pin: genPin()}));
+  const dbRoster = await dbFetch('roster');
+  if(!dbRoster) {
+    students = SEED_STUDENTS;
     await saveStudents();
   } else {
+    students = dbRoster;
     let migrated = false;
     students = students.map(s=>{
       if(!s.pin){ migrated = true; return {...s, pin: genPin()}; }
@@ -196,15 +232,23 @@ async function loadAll(){
     });
     if(migrated) await saveStudents();
   }
-  try{ const r = await window.storage.get('attendance-log', true); log = r ? JSON.parse(r.value) : {}; }catch(e){ log = {}; }
-  try{ const r = await window.storage.get('case-presenter', true); casePresenter = r ? JSON.parse(r.value) : null; }catch(e){ casePresenter = null; }
+  
+  const dbLog = await dbFetch('attendance-log');
+  log = dbLog || {};
+
+  const dbPresenter = await dbFetch('case-presenter');
+  casePresenter = dbPresenter || null;
 }
+
 async function saveCasePresenter(){
-  if(casePresenter) await window.storage.set('case-presenter', JSON.stringify(casePresenter), true);
-  else await window.storage.set('case-presenter', JSON.stringify(null), true);
+  await dbPut('case-presenter', casePresenter);
 }
-async function saveStudents(){ await window.storage.set('roster', JSON.stringify(students), true); }
-async function saveLog(){ await window.storage.set('attendance-log', JSON.stringify(log), true); }
+async function saveStudents(){ 
+  await dbPut('roster', students); 
+}
+async function saveLog(){ 
+  await dbPut('attendance-log', log); 
+}
 
 function toast(msg){
   const t = document.getElementById('toast');
@@ -212,7 +256,7 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'), 2400);
 }
 
-// ---------- modal system (replaces prompt/confirm, which don't work in this sandboxed view) ----------
+// ---------- modal system ----------
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 
 function modalPinEntry(){
@@ -275,6 +319,7 @@ function studentDayStatus(entry, roll){
   ['morning','evening'].forEach(s=>{
     if(entry[s]?.status==='held'){
       held++;
+      if(!entry[s].absentees) entry[s].absentees = [];
       if(!entry[s].absentees.includes(roll)) attended++;
     }
   });
@@ -289,6 +334,7 @@ function studentStats(roll){
     ['morning','evening'].forEach(s=>{
       if(entry[s]?.status==='held'){
         held++;
+        if(!entry[s].absentees) entry[s].absentees = [];
         if(!entry[s].absentees.includes(roll)) attended++;
       }
     });
@@ -342,12 +388,13 @@ function renderBRStatus(){
 
 // ---------- tabs ----------
 document.querySelectorAll('.tab').forEach(t=>{
-  t.onclick = ()=>{
+  t.onclick = async ()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     ['overview','search','editor'].forEach(name=>{
       document.getElementById('tab-'+name).classList.toggle('hidden', name!==t.dataset.tab);
     });
+    await loadAll();
     renderActiveTab(t.dataset.tab);
   };
 });
@@ -586,7 +633,7 @@ function renderEditor(){
 
     <div class="card">
       <h3>👥 Manage roster <span class="muted">(${students.length} students)</span></h3>
-      <p class="muted" style="margin-top:-6px;">Each student gets a private 4-digit PIN so only they can view their own record. Share PINs with students individually (e.g. DM) — don't post the list publicly.</p>
+      <p class="muted" style="margin-top:-6px;">Each student gets a private 4-digit PIN so only they can view their own record.</p>
       <div class="field">
         <label>Add students — "Roll, Name" or "Roll, Name, PIN" one per line</label>
         <textarea id="bulkRoster" rows="3" placeholder="349, Full Name&#10;350, Another Name, 4821"></textarea>
@@ -648,7 +695,7 @@ function renderEditor(){
 
     <div class="card">
       <h3>💾 Backup &amp; export</h3>
-      <p class="muted" style="margin-top:-6px;">Keep a copy in case anything goes wrong, or hand data off to whoever takes over as BR next.</p>
+      <p class="muted" style="margin-top:-6px;">Keep a copy in case anything goes wrong.</p>
       <div class="btn-row">
         <button class="btn ghost btn-sm" id="exportBackupBtn">⬇️ Download full backup (JSON)</button>
         <label class="file-input-label btn-sm">⬆️ Restore from backup<input type="file" id="restoreInput" accept="application/json"></label>
@@ -709,7 +756,7 @@ function renderEditor(){
   };
   el.querySelectorAll('[data-remove]').forEach(x=>{
     x.onclick = ()=>{
-      modalConfirm('Remove student?', `${x.dataset.remove} will be removed from the roster. Past attendance stays in the log but won't show under their name.`, async ()=>{
+      modalConfirm('Remove student?', `${x.dataset.remove} will be removed from the roster.`, async ()=>{
         students = students.filter(s=>s.roll!==x.dataset.remove);
         await saveStudents();
         toast('Student removed');
@@ -719,7 +766,7 @@ function renderEditor(){
   });
   el.querySelectorAll('[data-reset]').forEach(x=>{
     x.onclick = ()=>{
-      modalConfirm('Reset PIN?', `A new PIN will be generated for roll ${x.dataset.reset}. Their old PIN will stop working — you'll need to share the new one with them.`, async ()=>{
+      modalConfirm('Reset PIN?', `A new PIN will be generated for roll ${x.dataset.reset}.`, async ()=>{
         const st = students.find(s=>s.roll===x.dataset.reset);
         if(st){
           st.pin = genPin();
@@ -806,7 +853,7 @@ function renderEditor(){
       const e = log[d];
       ['morning','evening'].forEach(s=>{
         if(e[s]){
-          rows.push([d, s, e[s].status, e[s].status==='held' ? e[s].absentees.join('; ') : '']);
+          rows.push([d, s, e[s].status, e[s].status==='held' ? (e[s].absentees ? e[s].absentees.join('; ') : '') : '']);
         }
       });
     });
@@ -818,14 +865,15 @@ function startDraft(dateVal){
   const existing = log[dateVal];
   editorDraft = {
     date: dateVal,
-    morning: existing ? {...existing.morning, absentees:[...existing.morning.absentees]} : {status:null, absentees:[]},
-    evening: existing ? {...existing.evening, absentees:[...existing.evening.absentees]} : {status:null, absentees:[]},
+    morning: existing ? {...existing.morning, absentees: existing.morning.absentees ? [...existing.morning.absentees] : []} : {status:null, absentees:[]},
+    evening: existing ? {...existing.evening, absentees: existing.evening.absentees ? [...existing.evening.absentees] : []} : {status:null, absentees:[]},
   };
 }
 function renderChips(containerId, session){
   const c = document.getElementById(containerId);
   if(!c) return;
   if(students.length===0){ c.innerHTML = `<p class="muted">Add students to the roster first.</p>`; return; }
+  if(!session.absentees) session.absentees = [];
   c.innerHTML = students.map(s=>{
     const isAbsent = session.absentees.includes(s.roll);
     return `<span class="student-chip ${isAbsent?'absent':''}" data-roll="${s.roll}">${isAbsent?'✕':'✓'} ${s.roll}</span>`;
@@ -844,8 +892,10 @@ function renderHistory(){
   if(dates.length===0) return `<div class="empty-state"><div class="em">📭</div>No entries yet — add one above.</div>`;
   return dates.map(d=>{
     const e = log[d];
-    const m = e.morning.status==='held' ? `AM ✓ (${e.morning.absentees.length} absent)` : 'AM cancelled';
-    const ev = e.evening.status==='held' ? `PM ✓ (${e.evening.absentees.length} absent)` : 'PM cancelled';
+    const mAbs = e.morning.absentees ? e.morning.absentees.length : 0;
+    const eAbs = e.evening.absentees ? e.evening.absentees.length : 0;
+    const m = e.morning.status==='held' ? `AM ✓ (${mAbs} absent)` : 'AM cancelled';
+    const ev = e.evening.status==='held' ? `PM ✓ (${eAbs} absent)` : 'PM cancelled';
     return `<div class="log-row">
       <span><b>${fmtNice(d)}</b><br><span class="muted">${m} · ${ev}</span></span>
       <span class="btn-row">
@@ -893,6 +943,10 @@ function downloadFile(filename, content, mime){
 
 // ---------- init ----------
 (async function init(){
+  if (DB_URL === "PASTE_YOUR_FIREBASE_URL_HERE") {
+    alert("Please edit index.html in GitHub and paste your Firebase Database URL in the DB_URL variable!");
+    return;
+  }
   await loadAll();
   renderBRStatus();
   renderSearch();
