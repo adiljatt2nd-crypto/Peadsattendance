@@ -160,7 +160,6 @@ const TARGET = 75;
 const BR_PIN = '551555';
 function genPin(){ return String(Math.floor(1000 + Math.random()*9000)); }
 
-// Pre-seeded with your custom names & secure student PINs!
 const SEED_STUDENTS = [
   {roll:'11', name:'Amna Khalid', pin:'8033'}, 
   {roll:'54', name:'Fatima Shahid', pin:'8341'},
@@ -839,14 +838,55 @@ function renderEditor(){
     reader.readAsText(file);
     e.target.value = '';
   };
+  
+  // Custom Dynamic Multi-Column Grid Export (Individual Dates + AM/PM status + Totals + Percentage)
   document.getElementById('exportSummaryBtn').onclick = ()=>{
-    const rows = [['Roll No','Name','Sessions Held','Sessions Attended','Attendance %','Needed for 75%']];
-    students.forEach(s=>{
-      const st = studentStats(s.roll);
-      rows.push([s.roll, s.name, st.held, st.attended, st.pct, st.needed]);
+    const sortedDates = Object.keys(log).sort();
+    const headers = ['Roll No', 'Name'];
+    
+    // Create dual headers for each date (AM and PM)
+    sortedDates.forEach(d => {
+      headers.push(`${d} (AM)`);
+      headers.push(`${d} (PM)`);
     });
-    downloadFile(`peds-attendance-summary-${todayStr()}.csv`, toCSV(rows), 'text/csv');
+    
+    headers.push('Sessions Held', 'Sessions Attended', 'Attendance %', 'Needed for 75%');
+    
+    const rows = [headers];
+    
+    students.forEach(s => {
+      const row = [s.roll, s.name];
+      
+      // Calculate active attendance for each date
+      sortedDates.forEach(d => {
+        const entry = log[d];
+        
+        // Morning (AM) Status
+        if (entry.morning?.status === 'held') {
+          const isAbs = entry.morning.absentees?.includes(s.roll);
+          row.push(isAbs ? 'A' : 'P');
+        } else {
+          row.push('—'); // Cancelled/Not held
+        }
+        
+        // Evening (PM) Status
+        if (entry.evening?.status === 'held') {
+          const isAbs = entry.evening.absentees?.includes(s.roll);
+          row.push(isAbs ? 'A' : 'P');
+        } else {
+          row.push('—'); // Cancelled/Not held
+        }
+      });
+      
+      // Append Overall Statistics
+      const st = studentStats(s.roll);
+      row.push(st.held, st.attended, `${st.pct}%`, st.needed);
+      rows.push(row);
+    });
+    
+    downloadFile(`peds-attendance-grid-${todayStr()}.csv`, toCSV(rows), 'text/csv');
   };
+  
   document.getElementById('exportRawBtn').onclick = ()=>{
     const rows = [['Date','Session','Status','Absent Roll Numbers']];
     Object.keys(log).sort().forEach(d=>{
