@@ -151,7 +151,7 @@
   .btn.ghost{background:#fff;border:1.5px solid var(--border);color:var(--ink);}
   .btn.danger{background:#fff;border:1.5px solid var(--red);color:var(--red);}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
-  .btn-sm{padding:7px 13px;font-size:12.5px;border-radius:10px;}
+  .btn-row-sm{padding:7px 13px;font-size:12.5px;border-radius:10px;}
 
   .session-toggle{display:flex;gap:8px;margin-bottom:10px;}
   .session-toggle button{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--border);background:#fff;font-weight:700;font-size:13px;cursor:pointer;}
@@ -236,7 +236,7 @@ const SEED_STUDENTS = [
   {roll:'245', name:'Muhammad Haad Munir Chaudhry', pin:'4980'},
   {roll:'247', name:'Muhammad Hamza Naseer Awan', pin:'5380'},
   {roll:'267', name:'Muhammad Shaafay Khan', pin:'4550'},
-  {roll(--);', name:'Muhammad Waleed Abdullah', pin:'8065'},
+  {roll:'286', name:'Muhammad Waleed Abdullah', pin:'8065'},
   {roll:'293', name:'Omar Abdullah Gill', pin:'8185'},
   {roll:'348', name:'Azmir Ali Khan', pin:'1373'}
 ];
@@ -1017,7 +1017,7 @@ function renderEditor(){
       <div class="btn-row"><button class="btn" id="addRosterBtn">➕ Add to roster</button></div>
       <div style="margin-top:14px;max-height:220px;overflow-y:auto;">
         ${students.length===0 ? `<p class="muted">No students added yet.</p>` :
-          students.map(s=>`<div class="log-row"><span><b>${s.roll}</b> — ${s.name} <span class="muted">· PIN ${s.pin||'—'}</span></span><span class="btn-row"><button class="pill-btn btn-sm" data-reset="${s.roll}">Reset PIN</button><span style="cursor:pointer;color:var(--red);font-weight:700;" data-remove="${s.roll}">Remove</span></span></div>`).join('')}
+          students.map(s=>`<div class="log-row"><span><b>s.roll</b> — ${s.name} <span class="muted">· PIN ${s.pin||'—'}</span></span><span class="btn-row"><button class="pill-btn btn-sm" data-reset="${s.roll}">Reset PIN</button><span style="cursor:pointer;color:var(--red);font-weight:700;" data-remove="${s.roll}">Remove</span></span></div>`).join('')}
       </div>
     </div>
 
@@ -1368,7 +1368,7 @@ function buildStudentReportHTML(student){
       <div class="rpt-row"><span><b>Remaining Slots:</b></span><span>${p.remaining}</span></div>
       ${p.mustAttendMore>0 ? `<div class="rpt-row"><span><b>Required Attendance:</b></span><span style="color:var(--red);font-weight:700;">Must attend ${p.mustAttendMore} more lectures</span></div>` : ''}
       <div class="rpt-row"><span><b>Safe Cushion:</b></span><span>Can miss up to <b>${p.canMiss}</b> more sessions</span></div>
-      <div style="margin-top:16px;padding:10px;border-radius:8px;background:${statusBadgeColor};color:#fff;text-align:center;font-weight:800;font-size:12px;letter-spacing:.04em;">${statusBadgeText}</div>
+      <div style="margin-top:166px;padding:10px;border-radius:8px;background:${statusBadgeColor};color:#fff;text-align:center;font-weight:800;font-size:12px;letter-spacing:.04em;">${statusBadgeText}</div>
       <div class="rpt-foot">PaedsTrack B1 · Personal Attendance Record</div>
     </div>`;
 }
