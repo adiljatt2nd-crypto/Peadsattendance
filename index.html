@@ -125,6 +125,29 @@
   .modal-box input:focus{border-color:var(--teal);}
   .file-input-label{display:inline-block;background:#fff;border:1.5px solid var(--border);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;}
   .file-input-label input{display:none;}
+
+  /* 🖨️ Clean print layout formatting */
+  @media print {
+    body { background: #fff; color: #000; font-size: 12pt; }
+    .wrap { max-width: 100%; padding: 0; margin: 0; }
+    .tabs, .hero-right, button, .btn, .pill-btn, .search-box, .suggest, .toast, .modal-overlay, #brStatusArea {
+      display: none !important;
+    }
+    .card {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin-bottom: 30px !important;
+      page-break-inside: avoid;
+    }
+    .ring-wrap { display: flex !important; flex-direction: row !important; }
+    .ring { border: 2px solid #000 !important; background: none !important; }
+    .ring-inner { background: none !important; }
+    .cal-grid { gap: 2px !important; }
+    .cal-day { border: 1px solid #ccc !important; color: #000 !important; background: none !important; }
+    .cal-day.present { font-weight: bold; background: #e6f7f5 !important; border: 1px solid var(--teal) !important; }
+    .cal-day.absent { color: var(--red) !important; text-decoration: line-through; }
+  }
 </style>
 </head>
 <body>
@@ -172,7 +195,7 @@ const SEED_STUDENTS = [
   {roll:'120', name:'Rahmeen Nauman', pin:'5611'}, 
   {roll:'158', name:'Abdullah Khan', pin:'6655'},
   {roll:'161', name:'Abdur Rahman', pin:'3040'}, 
-  {roll:'162', name:'Adil Hameed', pin:'3559'},
+  {roll:'162', name:'Adil Hameed', pin:'8004'},
   {roll:'180', name:'Awais Nazir', pin:'9915'}, 
   {roll:'196', name:'Hasnat Ahmed Liaquat', pin:'6300'},
   {roll:'241', name:'Muhammad Faisal Zaheer', pin:'2904'}, 
@@ -184,6 +207,38 @@ const SEED_STUDENTS = [
   {roll:'348', name:'Azmir Ali Khan', pin:'1373'}
 ];
 
+const SEED_LOG = {
+  "2026-07-15": {
+    "evening": {
+      "absentees": ["54", "75", "111", "77"],
+      "status": "held"
+    },
+    "morning": {
+      "absentees": ["54", "75", "111"],
+      "status": "held"
+    }
+  },
+  "2026-07-16": {
+    "evening": {
+      "absentees": ["196", "245", "77"],
+      "status": "held"
+    },
+    "morning": {
+      "absentees": ["77", "196", "245"],
+      "status": "held"
+    }
+  },
+  "2026-07-17": {
+    "evening": {
+      "status": "cancelled"
+    },
+    "morning": {
+      "absentees": ["161", "180", "196"],
+      "status": "held"
+    }
+  }
+};
+
 let students = [];
 let log = {};
 let isEditor = false;
@@ -193,7 +248,6 @@ let unlockedRoll = null;
 let calCursor = new Date();
 let casePresenter = null;
 
-// ---------- Firebase API helpers ----------
 async function dbFetch(path) {
   try {
     const res = await fetch(`${DB_URL}${path}.json`);
@@ -216,7 +270,6 @@ async function dbPut(path, data) {
   }
 }
 
-// ---------- Live storage helpers ----------
 async function loadAll(){
   const dbRoster = await dbFetch('roster');
   if(!dbRoster) {
@@ -233,7 +286,12 @@ async function loadAll(){
   }
   
   const dbLog = await dbFetch('attendance-log');
-  log = dbLog || {};
+  if(!dbLog && Object.keys(log).length === 0) {
+    log = SEED_LOG;
+    await saveLog();
+  } else {
+    log = dbLog || {};
+  }
 
   const dbPresenter = await dbFetch('case-presenter');
   casePresenter = dbPresenter || null;
@@ -255,7 +313,6 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'), 2400);
 }
 
-// ---------- modal system ----------
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 
 function modalPinEntry(){
@@ -311,7 +368,6 @@ function handleBRLogin(){
   modalPinEntry();
 }
 
-// ---------- attendance math ----------
 function studentDayStatus(entry, roll){
   if(!entry) return 'none';
   let held=0, attended=0;
@@ -374,7 +430,6 @@ function fmtNice(dstr){
   return d.toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'});
 }
 
-// ---------- header ----------
 function renderBRStatus(){
   const el = document.getElementById('brStatusArea');
   if(isEditor){
@@ -385,7 +440,6 @@ function renderBRStatus(){
   }
 }
 
-// ---------- tabs ----------
 document.querySelectorAll('.tab').forEach(t=>{
   t.onclick = async ()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -532,7 +586,10 @@ function renderStudentResult(){
   const color = pctColor(s.pct);
   el.innerHTML = `
     <div class="card">
-      <h3>👤 ${selectedStudent.name} <span class="muted">(${selectedStudent.roll})</span></h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="margin:0;">👤 ${selectedStudent.name} <span class="muted">(${selectedStudent.roll})</span></h3>
+        <button class="btn ghost btn-sm" onclick="window.print()">🖨️ Print Card</button>
+      </div>
       <div class="ring-wrap">
         <div class="ring" style="background:conic-gradient(${color} ${s.pct*3.6}deg, var(--gray-light) 0deg);">
           <div class="ring-inner">
@@ -693,8 +750,8 @@ function renderEditor(){
     </div>
 
     <div class="card">
-      <h3>💾 Backup &amp; export</h3>
-      <p class="muted" style="margin-top:-6px;">Keep a copy in case anything goes wrong.</p>
+      <h3>💾 Backup, Export &amp; Print</h3>
+      <p class="muted" style="margin-top:-6px;">Download backups, sheets, or print full hard copies.</p>
       <div class="btn-row">
         <button class="btn ghost btn-sm" id="exportBackupBtn">⬇️ Download full backup (JSON)</button>
         <label class="file-input-label btn-sm">⬆️ Restore from backup<input type="file" id="restoreInput" accept="application/json"></label>
@@ -702,11 +759,11 @@ function renderEditor(){
       <div class="btn-row" style="margin-top:10px;">
         <button class="btn ghost btn-sm" id="exportSummaryBtn">⬇️ Attendance summary (CSV)</button>
         <button class="btn ghost btn-sm" id="exportRawBtn">⬇️ Raw daily log (CSV)</button>
+        <button class="btn btn-sm" style="background:#0284c7;" onclick="window.print()">🖨️ Print Batch Sheet</button>
       </div>
     </div>
   `;
 
-  // case presenter handlers
   document.getElementById('savePresenterBtn').onclick = async ()=>{
     const roll = document.getElementById('presenterSelect').value;
     const topic = document.getElementById('presenterTopic').value.trim();
@@ -724,7 +781,6 @@ function renderEditor(){
     renderEditor();
   };
 
-  // roster handlers
   document.getElementById('addRosterBtn').onclick = async ()=>{
     const raw = document.getElementById('bulkRoster').value.trim();
     if(!raw) return;
@@ -810,7 +866,6 @@ function renderEditor(){
     renderEditor();
   };
 
-  // backup / export
   document.getElementById('exportBackupBtn').onclick = ()=>{
     const backup = { exportedAt: new Date().toISOString(), students, log };
     downloadFile(`peds-attendance-backup-${todayStr()}.json`, JSON.stringify(backup, null, 2), 'application/json');
@@ -839,51 +894,36 @@ function renderEditor(){
     e.target.value = '';
   };
   
-  // Custom Dynamic Multi-Column Grid Export (Individual Dates + AM/PM status + Totals + Percentage)
   document.getElementById('exportSummaryBtn').onclick = ()=>{
     const sortedDates = Object.keys(log).sort();
     const headers = ['Roll No', 'Name'];
-    
-    // Create dual headers for each date (AM and PM)
     sortedDates.forEach(d => {
       headers.push(`${d} (AM)`);
       headers.push(`${d} (PM)`);
     });
-    
     headers.push('Sessions Held', 'Sessions Attended', 'Attendance %', 'Needed for 75%');
-    
     const rows = [headers];
-    
     students.forEach(s => {
       const row = [s.roll, s.name];
-      
-      // Calculate active attendance for each date
       sortedDates.forEach(d => {
         const entry = log[d];
-        
-        // Morning (AM) Status
         if (entry.morning?.status === 'held') {
           const isAbs = entry.morning.absentees?.includes(s.roll);
           row.push(isAbs ? 'A' : 'P');
         } else {
-          row.push('—'); // Cancelled/Not held
+          row.push('—');
         }
-        
-        // Evening (PM) Status
         if (entry.evening?.status === 'held') {
           const isAbs = entry.evening.absentees?.includes(s.roll);
           row.push(isAbs ? 'A' : 'P');
         } else {
-          row.push('—'); // Cancelled/Not held
+          row.push('—');
         }
       });
-      
-      // Append Overall Statistics
       const st = studentStats(s.roll);
       row.push(st.held, st.attended, `${st.pct}%`, st.needed);
       rows.push(row);
     });
-    
     downloadFile(`peds-attendance-grid-${todayStr()}.csv`, toCSV(rows), 'text/csv');
   };
   
@@ -964,7 +1004,6 @@ document.getElementById('tab-editor').addEventListener('click', (e)=>{
   }
 });
 
-// ---------- CSV / file helpers ----------
 function toCSV(rows){
   return rows.map(row => row.map(cell=>{
     const s = String(cell ?? '');
@@ -981,12 +1020,7 @@ function downloadFile(filename, content, mime){
   toast('Download started ✅');
 }
 
-// ---------- init ----------
 (async function init(){
-  if (DB_URL === "PASTE_YOUR_FIREBASE_URL_HERE") {
-    alert("Please edit index.html in GitHub and paste your Firebase Database URL in the DB_URL variable!");
-    return;
-  }
   await loadAll();
   renderBRStatus();
   renderSearch();
