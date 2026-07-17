@@ -30,7 +30,7 @@
   .hero p{margin:2px 0 0;color:var(--ink-soft);font-size:13px;font-weight:500;}
   .hero-right{margin-left:auto;}
 
-  .pill-btn{border:1px solid var(--border);background:#fff;color:var(--ink);padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;}
+  .pill-btn{border:1px solid var(--border);background:#fff;color:var(--ink);padding:8px 14px;border-radius999px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;}
   .pill-btn:hover{border-color:var(--teal);color:var(--teal-dark);}
   .pill-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
 
@@ -1017,7 +1017,7 @@ function renderEditor(){
       <div class="btn-row"><button class="btn" id="addRosterBtn">➕ Add to roster</button></div>
       <div style="margin-top:14px;max-height:220px;overflow-y:auto;">
         ${students.length===0 ? `<p class="muted">No students added yet.</p>` :
-          students.map(s=>`<div class="log-row"><span><b>s.roll</b> — ${s.name} <span class="muted">· PIN ${s.pin||'—'}</span></span><span class="btn-row"><button class="pill-btn btn-sm" data-reset="${s.roll}">Reset PIN</button><span style="cursor:pointer;color:var(--red);font-weight:700;" data-remove="${s.roll}">Remove</span></span></div>`).join('')}
+          students.map(s=>`<div class="log-row"><span><b>${s.roll}</b> — ${s.name} <span class="muted">· PIN ${s.pin||'—'}</span></span><span class="btn-row"><button class="pill-btn btn-sm" data-reset="${s.roll}">Reset PIN</button><span style="cursor:pointer;color:var(--red);font-weight:700;" data-remove="${s.roll}">Remove</span></span></div>`).join('')}
       </div>
     </div>
 
@@ -1032,6 +1032,23 @@ function renderEditor(){
         <button class="pill-btn btn-sm ${tableSort==='roll'?'active':''}" id="sortRollBtn">By roll no.</button>
       </div>
       <div id="allStudentsTable" style="max-height:340px;overflow-y:auto;"></div>
+    </div>
+
+    <div class="card">
+      <h3>💾 Data Management (Backup / Export)</h3>
+      <p class="muted">Download local copies or upload system files directly into the database.</p>
+      <div class="btn-row" style="margin-bottom:14px;">
+        <button class="btn ghost btn-sm" id="btnExportJSON">📤 Export Raw Backup (JSON)</button>
+        <label class="file-input-label btn-sm">
+          📥 Import Raw Backup (JSON)
+          <input type="file" id="fileImportJSON" accept=".json">
+        </label>
+      </div>
+      <div class="btn-row">
+        <button class="pill-btn btn-sm" id="btnCsvSummary">📊 Summary CSV</button>
+        <button class="pill-btn btn-sm" id="btnCsvGrid">🏁 Matrix Grid CSV</button>
+        <button class="pill-btn btn-sm" id="btnCsvRawLog">📜 Raw Logs CSV</button>
+      </div>
     </div>
 
     <div class="card">
@@ -1079,6 +1096,104 @@ function renderEditor(){
       ${renderHistory()}
     </div>
   `;
+
+  document.getElementById('btnExportJSON').onclick = () => {
+    const dataObj = { exportedAt: new Date().toISOString(), students, log, schedule, casePresenter };
+    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `paedstrack-backup-${todayStr()}.json`;
+    a.click();
+    toast('Raw backup downloaded successfully! 📤');
+  };
+
+  document.getElementById('fileImportJSON').onchange = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const parsed = JSON.parse(evt.target.result);
+        modalConfirm('Overwrite system data?', 'This action completely replaces your live database entries. Proceed?', async () => {
+          if (parsed.students) students = parsed.students;
+          if (parsed.log) log = parsed.log;
+          if (parsed.schedule) schedule = parsed.schedule;
+          if (parsed.casePresenter !== undefined) casePresenter = parsed.casePresenter;
+          
+          await saveStudents();
+          await saveLog();
+          await saveSchedule();
+          await saveCasePresenter();
+          toast('Database restored successfully! 📥');
+          renderEditor();
+        });
+      } catch(err) {
+        toast('Failed to read configuration: Invalid JSON structure structure.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  document.getElementById('btnCsvSummary').onclick = () => {
+    let csv = 'Roll Number,Name,Total Sessions,Attended Sessions,Attendance Percentage,Status Cushion\r\n';
+    students.forEach(s => {
+      const st = studentStats(s.roll);
+      const proj = studentProjection(s.roll);
+      const label = !proj.reachable ? 'Critical' : proj.mustAttendMore > 0 ? 'Warning' : 'Safe';
+      csv += `"${s.roll}","${s.name}",${st.held},${st.attended},${st.pct}%,${label} (Can miss ${proj.canMiss})\r\n`;
+    });
+    downloadCSV(csv, `paedstrack-summary-${todayStr()}.csv`);
+  };
+
+  document.getElementById('btnCsvGrid').onclick = () => {
+    const sortedDates = Object.keys(log).sort();
+    let header = 'Roll Number,Name';
+    sortedDates.forEach(d => { header += `,${d} AM,${d} PM`; });
+    header += '\r\n';
+    
+    let rows = '';
+    students.forEach(s => {
+      let row = `"${s.roll}","${s.name}"`;
+      sortedDates.forEach(d => {
+        const entry = log[d];
+        ['morning', 'evening'].forEach(slot => {
+          if(!entry || !entry[slot] || entry[slot].status === 'none') row += ',N/A';
+          else if(entry[slot].status === 'cancelled') row += ',Cancelled';
+          else {
+            const abs = entry[slot].absentees || [];
+            row += abs.includes(s.roll) ? ',Absent' : ',Present';
+          }
+        });
+      });
+      rows += row + '\r\n';
+    });
+    downloadCSV(header + rows, `paedstrack-matrix-${todayStr()}.csv`);
+  };
+
+  document.getElementById('btnCsvRawLog').onclick = () => {
+    let csv = 'Date,Session Slot,Status,Absentee Rolls\r\n';
+    Object.keys(log).sort().reverse().forEach(d => {
+      const entry = log[d];
+      ['morning', 'evening'].forEach(slot => {
+        const data = entry[slot];
+        if(data && data.status !== 'none') {
+          const label = slot === 'morning' ? 'AM' : 'PM';
+          const absStr = data.absentees ? data.absentees.join(' ') : '';
+          csv += `${d},${label},${data.status},"${absStr}"\r\n`;
+        }
+      });
+    });
+    downloadCSV(csv, `paedstrack-rawlogs-${todayStr()}.csv`);
+  };
+
+  function downloadCSV(csvText, filename) {
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    toast('CSV downloaded! ⬇️');
+  }
 
   document.getElementById('savePresenterBtn').onclick = async ()=>{
     const roll = document.getElementById('presenterSelect').value;
