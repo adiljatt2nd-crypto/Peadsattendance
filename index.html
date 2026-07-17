@@ -6,11 +6,12 @@
 <title>PaedsTrack B1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --ink:#1e293b; --ink-soft:#64748b;
-    --teal:#0d9488; --teal-dark:#0f766e; --teal-light:#e6f7f5;
-    --amber:#f59e0b; --amber-light:#fef3e2;
+    --teal:#7a1230; --teal-dark:#4a0a1c; --teal-light:#fbe9ee;
+    --amber:#b8860b; --amber-light:#fbf1d6;
     --green:#22c55e; --green-light:#dcfce7;
     --red:#ef4444; --red-light:#fee2e2;
     --blue:#3b82f6; --blue-light:#dbeafe;
@@ -24,7 +25,7 @@
   .wrap{max-width:920px;margin:0 auto;padding:20px 16px 60px;}
 
   .hero{display:flex;align-items:center;gap:14px;padding:22px 4px 18px;border-bottom:1px solid var(--border);margin-bottom:18px;}
-  .hero-badge{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--teal),var(--teal-dark));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:var(--shadow);}
+  .hero-badge{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--teal),var(--teal-dark));border:2px solid var(--amber);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:var(--shadow);}
   .hero h1{font-size:20px;margin:0;font-weight:700;line-height:1.25;}
   .hero p{margin:2px 0 0;color:var(--ink-soft);font-size:13px;font-weight:500;}
   .hero-right{margin-left:auto;}
@@ -73,13 +74,33 @@
   .cal-head button{border:none;background:var(--gray-light);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .cal-dow{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-align:center;padding-bottom:4px;}
-  .cal-day{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;}
+  .cal-day{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;gap:1px;}
   .cal-day.empty{visibility:hidden;}
   .cal-day.present{background:var(--green);color:#fff;}
   .cal-day.absent{background:var(--red);color:#fff;}
   .cal-day.partial{background:var(--blue);color:#fff;}
   .cal-day.none{background:var(--gray-light);color:var(--ink-soft);font-weight:600;}
   .cal-day.today{box-shadow:0 0 0 2px var(--ink);}
+  .cal-day .tick{font-size:8px;letter-spacing:-1px;line-height:1;opacity:.9;}
+
+  /* print report (screen: hidden; only shown via print or image capture) */
+  #printArea{display:none;}
+  .rpt{font-family:'Inter',sans-serif;color:var(--ink);width:480px;padding:24px;background:#fff;}
+  .rpt h2{font-family:'Poppins',sans-serif;font-size:17px;margin:0 0 2px;color:var(--teal-dark);}
+  .rpt .rpt-sub{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+  .rpt .rpt-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--border);}
+  .rpt .rpt-section-title{font-weight:700;font-size:13px;margin:14px 0 6px;color:var(--teal-dark);}
+  .rpt .rpt-count{font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;color:var(--teal-dark);}
+  .rpt .rpt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .rpt .rpt-box{background:var(--gray-light);border-radius:10px;padding:10px;text-align:center;}
+  .rpt .rpt-rolls{font-size:12px;line-height:1.7;word-break:break-word;}
+  .rpt .rpt-foot{margin-top:20px;font-size:10.5px;color:var(--ink-soft);border-top:1px solid var(--border);padding-top:10px;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block !important;position:absolute;top:0;left:0;width:100%;}
+    .rpt{width:100%;}
+  }
   .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink-soft);font-weight:600;}
   .legend span{display:inline-flex;align-items:center;gap:5px;}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
@@ -125,29 +146,6 @@
   .modal-box input:focus{border-color:var(--teal);}
   .file-input-label{display:inline-block;background:#fff;border:1.5px solid var(--border);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;}
   .file-input-label input{display:none;}
-
-  /* 🖨️ Clean print layout formatting */
-  @media print {
-    body { background: #fff; color: #000; font-size: 12pt; }
-    .wrap { max-width: 100%; padding: 0; margin: 0; }
-    .tabs, .hero-right, button, .btn, .pill-btn, .search-box, .suggest, .toast, .modal-overlay, #brStatusArea {
-      display: none !important;
-    }
-    .card {
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      margin-bottom: 30px !important;
-      page-break-inside: avoid;
-    }
-    .ring-wrap { display: flex !important; flex-direction: row !important; }
-    .ring { border: 2px solid #000 !important; background: none !important; }
-    .ring-inner { background: none !important; }
-    .cal-grid { gap: 2px !important; }
-    .cal-day { border: 1px solid #ccc !important; color: #000 !important; background: none !important; }
-    .cal-day.present { font-weight: bold; background: #e6f7f5 !important; border: 1px solid var(--teal) !important; }
-    .cal-day.absent { color: var(--red) !important; text-decoration: line-through; }
-  }
 </style>
 </head>
 <body>
@@ -175,67 +173,51 @@
 </div>
 <div class="toast" id="toast"></div>
 <div id="modalRoot"></div>
+<div id="printArea"></div>
 
 <script>
-const DB_URL = "https://peadstrack-default-rtdb.firebaseio.com/"; 
-
+// --- CONFIGURED WITH YOUR REALTIME DATABASE URL ---
+const DB_URL = "https://peadstrack-default-rtdb.firebaseio.com/";
 const TARGET = 75;
 const BR_PIN = '551555';
 function genPin(){ return String(Math.floor(1000 + Math.random()*9000)); }
 
 const SEED_STUDENTS = [
-  {roll:'11', name:'Amna Khalid', pin:'8033'}, 
+  {roll:'11', name:'Amna Khalid', pin:'8033'},
   {roll:'54', name:'Fatima Shahid', pin:'8341'},
-  {roll:'75', name:'Iman Ahmad', pin:'2677'}, 
+  {roll:'75', name:'Iman Ahmad', pin:'2677'},
   {roll:'76', name:'Inshrah Qureshi', pin:'1410'},
-  {roll:'77', name:'Iqra Amir', pin:'9016'}, 
+  {roll:'77', name:'Iqra Amir', pin:'9016'},
   {roll:'78', name:'Ishmal Fatima Shahid', pin:'5829'},
-  {roll:'95', name:'Maham Ashraf', pin:'7199'}, 
+  {roll:'95', name:'Maham Ashraf', pin:'7199'},
   {roll:'111', name:'Nabiha Tahir', pin:'4193'},
-  {roll:'120', name:'Rahmeen Nauman', pin:'5611'}, 
+  {roll:'120', name:'Rahmeen Nauman', pin:'5611'},
   {roll:'158', name:'Abdullah Khan', pin:'6655'},
-  {roll:'161', name:'Abdur Rahman', pin:'3040'}, 
+  {roll:'161', name:'Abdur Rahman', pin:'3040'},
   {roll:'162', name:'Adil Hameed', pin:'8004'},
-  {roll:'180', name:'Awais Nazir', pin:'9915'}, 
+  {roll:'180', name:'Awais Nazir', pin:'9915'},
   {roll:'196', name:'Hasnat Ahmed Liaquat', pin:'6300'},
-  {roll:'241', name:'Muhammad Faisal Zaheer', pin:'2904'}, 
+  {roll:'241', name:'Muhammad Faisal Zaheer', pin:'2904'},
   {roll:'245', name:'Muhammad Haad Munir Chaudhry', pin:'4980'},
-  {roll:'247', name:'Muhammad Hamza Naseer Awan', pin:'5380'}, 
+  {roll:'247', name:'Muhammad Hamza Naseer Awan', pin:'5380'},
   {roll:'267', name:'Muhammad Shaafay Khan', pin:'4550'},
-  {roll:'286', name:'Muhammad Waleed Abdullah', pin:'8065'}, 
+  {roll:'286', name:'Muhammad Waleed Abdullah', pin:'8065'},
   {roll:'293', name:'Omar Abdullah Gill', pin:'8185'},
   {roll:'348', name:'Azmir Ali Khan', pin:'1373'}
 ];
 
 const SEED_LOG = {
   "2026-07-15": {
-    "evening": {
-      "absentees": ["54", "75", "111", "77"],
-      "status": "held"
-    },
-    "morning": {
-      "absentees": ["54", "75", "111"],
-      "status": "held"
-    }
+    "evening": { "absentees": ["54", "75", "111", "77"], "status": "held" },
+    "morning": { "absentees": ["54", "75", "111"], "status": "held" }
   },
   "2026-07-16": {
-    "evening": {
-      "absentees": ["196", "245", "77"],
-      "status": "held"
-    },
-    "morning": {
-      "absentees": ["77", "196", "245"],
-      "status": "held"
-    }
+    "evening": { "absentees": ["196", "245", "77"], "status": "held" },
+    "morning": { "absentees": ["77", "196", "245"], "status": "held" }
   },
   "2026-07-17": {
-    "evening": {
-      "status": "cancelled"
-    },
-    "morning": {
-      "absentees": ["161", "180", "196"],
-      "status": "held"
-    }
+    "evening": { "status": "cancelled" },
+    "morning": { "absentees": ["161", "180", "196"], "status": "held" }
   }
 };
 
@@ -247,32 +229,27 @@ let selectedStudent = null;
 let unlockedRoll = null;
 let calCursor = new Date();
 let casePresenter = null;
+let tableSort = 'low';
 
-async function dbFetch(path) {
-  try {
+// ---------- storage helpers (Firebase Realtime Database) ----------
+async function dbFetch(path){
+  try{
     const res = await fetch(`${DB_URL}${path}.json`);
     return await res.json();
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
+  }catch(e){ console.error(e); return null; }
 }
-
-async function dbPut(path, data) {
-  try {
+async function dbPut(path, data){
+  try{
     await fetch(`${DB_URL}${path}.json`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify(data)
     });
-  } catch (e) {
-    console.error(e);
-  }
+  }catch(e){ console.error(e); }
 }
-
 async function loadAll(){
   const dbRoster = await dbFetch('roster');
-  if(!dbRoster) {
+  if(!dbRoster){
     students = SEED_STUDENTS;
     await saveStudents();
   } else {
@@ -284,28 +261,21 @@ async function loadAll(){
     });
     if(migrated) await saveStudents();
   }
-  
+
   const dbLog = await dbFetch('attendance-log');
-  if(!dbLog && Object.keys(log).length === 0) {
+  if(!dbLog){
     log = SEED_LOG;
     await saveLog();
   } else {
-    log = dbLog || {};
+    log = dbLog;
   }
 
   const dbPresenter = await dbFetch('case-presenter');
   casePresenter = dbPresenter || null;
 }
-
-async function saveCasePresenter(){
-  await dbPut('case-presenter', casePresenter);
-}
-async function saveStudents(){ 
-  await dbPut('roster', students); 
-}
-async function saveLog(){ 
-  await dbPut('attendance-log', log); 
-}
+async function saveCasePresenter(){ await dbPut('case-presenter', casePresenter); }
+async function saveStudents(){ await dbPut('roster', students); }
+async function saveLog(){ await dbPut('attendance-log', log); }
 
 function toast(msg){
   const t = document.getElementById('toast');
@@ -313,6 +283,7 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'), 2400);
 }
 
+// ---------- modal system ----------
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 
 function modalPinEntry(){
@@ -363,19 +334,39 @@ function modalConfirm(title, desc, onYes){
   document.getElementById('noBtn').onclick = closeModal;
   document.getElementById('yesBtn').onclick = ()=>{ closeModal(); onYes(); };
 }
+function modalReportChoice(title, onPrint, onImage){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-overlay" id="ov">
+      <div class="modal-box">
+        <div class="em">📄</div>
+        <h3>${title}</h3>
+        <p>Choose how you'd like to share this.</p>
+        <div class="btn-row" style="justify-content:center;">
+          <button class="btn ghost btn-sm" id="cancelBtn">Cancel</button>
+          <button class="btn ghost btn-sm" id="imgBtn">⬇️ Save as image</button>
+          <button class="btn btn-sm" id="printBtn">🖨️ Print</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('cancelBtn').onclick = closeModal;
+  document.getElementById('printBtn').onclick = ()=>{ closeModal(); onPrint(); };
+  document.getElementById('imgBtn').onclick = ()=>{ closeModal(); onImage(); };
+}
 
 function handleBRLogin(){
   modalPinEntry();
 }
 
+// ---------- attendance math ----------
 function studentDayStatus(entry, roll){
   if(!entry) return 'none';
   let held=0, attended=0;
   ['morning','evening'].forEach(s=>{
     if(entry[s]?.status==='held'){
       held++;
-      if(!entry[s].absentees) entry[s].absentees = [];
-      if(!entry[s].absentees.includes(roll)) attended++;
+      const absentees = entry[s].absentees || [];
+      if(!absentees.includes(roll)) attended++;
     }
   });
   if(held===0) return 'none';
@@ -389,8 +380,8 @@ function studentStats(roll){
     ['morning','evening'].forEach(s=>{
       if(entry[s]?.status==='held'){
         held++;
-        if(!entry[s].absentees) entry[s].absentees = [];
-        if(!entry[s].absentees.includes(roll)) attended++;
+        const absentees = entry[s].absentees || [];
+        if(!absentees.includes(roll)) attended++;
       }
     });
   });
@@ -429,7 +420,32 @@ function fmtNice(dstr){
   const d = new Date(dstr+'T00:00:00');
   return d.toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'});
 }
+function tableColor(pct){ return pct>=TARGET ? {bg:'var(--green-light)', fg:'#15803d'} : {bg:'var(--red-light)', fg:'#b91c1c'}; }
+function allStudentsSummaryLine(){
+  if(students.length===0) return 'No students in roster yet.';
+  let below=0, above=0;
+  students.forEach(s=>{ const st=studentStats(s.roll); if(st.held===0) return; st.pct>=TARGET ? above++ : below++; });
+  return `${above} at or above ${TARGET}% · ${below} below ${TARGET}%${students.length-above-below>0 ? ` · ${students.length-above-below} with no sessions yet` : ''}`;
+}
+function renderAllStudentsTable(filterText){
+  const el = document.getElementById('allStudentsTable');
+  if(!el) return;
+  const q = (filterText||'').trim().toLowerCase();
+  let rows = students.map(s=>({s, st: studentStats(s.roll)}));
+  if(q) rows = rows.filter(r=> r.s.roll.toLowerCase().includes(q) || r.s.name.toLowerCase().includes(q));
+  if(tableSort==='low') rows.sort((a,b)=> a.st.pct - b.st.pct);
+  else rows.sort((a,b)=> a.s.roll.localeCompare(b.s.roll, undefined, {numeric:true}));
+  if(rows.length===0){ el.innerHTML = `<p class="muted">No matching students.</p>`; return; }
+  el.innerHTML = rows.map(({s, st})=>{
+    const c = tableColor(st.pct);
+    return `<div class="log-row">
+      <span><b>${s.roll}</b> — ${s.name}<br><span class="muted">${st.attended}/${st.held} sessions${st.pct<TARGET && st.needed>0 ? ` · needs ${st.needed} more` : ''}</span></span>
+      <span class="badge" style="background:${c.bg};color:${c.fg};font-size:13px;">${st.held===0 ? '—' : st.pct+'%'}</span>
+    </div>`;
+  }).join('');
+}
 
+// ---------- header ----------
 function renderBRStatus(){
   const el = document.getElementById('brStatusArea');
   if(isEditor){
@@ -440,6 +456,7 @@ function renderBRStatus(){
   }
 }
 
+// ---------- tabs ----------
 document.querySelectorAll('.tab').forEach(t=>{
   t.onclick = async ()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -485,11 +502,13 @@ function renderPresenterBanner(){
   if(!casePresenter || !casePresenter.roll) return '';
   const st = students.find(s=>s.roll===casePresenter.roll);
   const name = st ? st.name : 'Unknown student';
+  const dateLine = casePresenter.date ? fmtNice(casePresenter.date) : '';
   return `
-    <div class="card" style="padding:14px 18px;background:linear-gradient(135deg,var(--teal-light),#fff);border-color:var(--teal);">
-      <h3 style="margin-bottom:4px;">🎤 Presenting case</h3>
+    <div class="card" style="padding:14px 18px;background:linear-gradient(135deg,var(--teal-light),#fff);border:1px solid var(--amber);">
+      <h3 style="margin-bottom:4px;">🎤 Presenting case${dateLine ? ` <span class="muted" style="font-weight:600;">· ${dateLine}</span>` : ''}</h3>
       <div style="font-size:15px;font-weight:700;">${casePresenter.roll} — ${name}</div>
       ${casePresenter.topic ? `<div class="muted" style="margin-top:2px;">Topic: ${casePresenter.topic}</div>` : ''}
+      ${casePresenter.teacher ? `<div class="muted" style="margin-top:2px;">Teacher: ${casePresenter.teacher}</div>` : ''}
     </div>
   `;
 }
@@ -586,10 +605,7 @@ function renderStudentResult(){
   const color = pctColor(s.pct);
   el.innerHTML = `
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <h3 style="margin:0;">👤 ${selectedStudent.name} <span class="muted">(${selectedStudent.roll})</span></h3>
-        <button class="btn ghost btn-sm" onclick="window.print()">🖨️ Print Card</button>
-      </div>
+      <h3>👤 ${selectedStudent.name} <span class="muted">(${selectedStudent.roll})</span></h3>
       <div class="ring-wrap">
         <div class="ring" style="background:conic-gradient(${color} ${s.pct*3.6}deg, var(--gray-light) 0deg);">
           <div class="ring-inner">
@@ -612,9 +628,15 @@ function renderStudentResult(){
       <h3>🗓 Monthly calendar</h3>
       ${renderCalendar(selectedStudent.roll)}
     </div>
+    <div class="btn-row">
+      <button class="btn ghost btn-sm" id="printMyBtn">📄 Print / save my attendance</button>
+    </div>
   `;
   document.getElementById('calPrev').onclick = ()=>{ calCursor.setMonth(calCursor.getMonth()-1); renderStudentResult(); };
   document.getElementById('calNext').onclick = ()=>{ calCursor.setMonth(calCursor.getMonth()+1); renderStudentResult(); };
+  document.getElementById('printMyBtn').onclick = ()=>{
+    modalReportChoice('My attendance report', ()=>printReport(buildStudentReportHTML(selectedStudent)), ()=>imageReport(buildStudentReportHTML(selectedStudent), `attendance-${selectedStudent.roll}.png`));
+  };
 }
 function renderCalendar(roll){
   const year = calCursor.getFullYear(), month = calCursor.getMonth();
@@ -630,7 +652,8 @@ function renderCalendar(roll){
     const dstr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const status = studentDayStatus(log[dstr], roll);
     const isToday = dstr===todayStr();
-    cells += `<div class="cal-day ${status}${isToday?' today':''}">${d}</div>`;
+    const tick = status==='present' ? '<span class="tick">✓✓</span>' : status==='partial' ? '<span class="tick">✓</span>' : status==='absent' ? '<span class="tick">✕</span>' : '';
+    cells += `<div class="cal-day ${status}${isToday?' today':''}">${d}${tick}</div>`;
   }
   return `
     <div class="cal-head">
@@ -640,9 +663,9 @@ function renderCalendar(roll){
     </div>
     <div class="cal-grid">${head}${cells}</div>
     <div class="legend">
-      <span><span class="dot" style="background:var(--green)"></span>Present</span>
-      <span><span class="dot" style="background:var(--red)"></span>Absent</span>
-      <span><span class="dot" style="background:var(--blue)"></span>Partial</span>
+      <span><span class="dot" style="background:var(--green)"></span>Present ✓✓ (both sessions)</span>
+      <span><span class="dot" style="background:var(--red)"></span>Absent ✕</span>
+      <span><span class="dot" style="background:var(--blue)"></span>Partial ✓ (one session)</span>
       <span><span class="dot" style="background:var(--gray-light);border:1px solid var(--border)"></span>No class</span>
     </div>
   `;
@@ -678,6 +701,14 @@ function renderEditor(){
         </select>
       </div>
       <div class="field">
+        <label>Date</label>
+        <input type="date" id="presenterDate" value="${casePresenter?.date || todayStr()}">
+      </div>
+      <div class="field">
+        <label>Teacher (optional)</label>
+        <input type="text" id="presenterTeacher" placeholder="e.g. Dr. Ahmed" value="${casePresenter?.teacher ? casePresenter.teacher.replace(/"/g,'&quot;') : ''}">
+      </div>
+      <div class="field">
         <label>Topic (optional)</label>
         <input type="text" id="presenterTopic" placeholder="e.g. Nephrotic syndrome" value="${casePresenter?.topic ? casePresenter.topic.replace(/"/g,'&quot;') : ''}">
       </div>
@@ -689,7 +720,7 @@ function renderEditor(){
 
     <div class="card">
       <h3>👥 Manage roster <span class="muted">(${students.length} students)</span></h3>
-      <p class="muted" style="margin-top:-6px;">Each student gets a private 4-digit PIN so only they can view their own record.</p>
+      <p class="muted" style="margin-top:-6px;">Each student gets a private 4-digit PIN so only they can view their own record. Share PINs with students individually (e.g. DM) — don't post the list publicly.</p>
       <div class="field">
         <label>Add students — "Roll, Name" or "Roll, Name, PIN" one per line</label>
         <textarea id="bulkRoster" rows="3" placeholder="349, Full Name&#10;350, Another Name, 4821"></textarea>
@@ -702,6 +733,19 @@ function renderEditor(){
       <div class="btn-row" style="margin-top:12px;">
         <button class="btn ghost btn-sm" id="exportPinsBtn">⬇️ Export roster + PINs (CSV)</button>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 All students — attendance %</h3>
+      <p class="muted" style="margin-top:-6px;">${allStudentsSummaryLine()}</p>
+      <div class="field" style="margin-bottom:10px;">
+        <input type="text" id="rosterTableFilter" placeholder="Filter by roll or name…">
+      </div>
+      <div class="btn-row" style="margin-bottom:10px;">
+        <button class="pill-btn btn-sm ${tableSort==='low'?'active':''}" id="sortLowBtn">Lowest first</button>
+        <button class="pill-btn btn-sm ${tableSort==='roll'?'active':''}" id="sortRollBtn">By roll no.</button>
+      </div>
+      <div id="allStudentsTable" style="max-height:340px;overflow-y:auto;"></div>
     </div>
 
     <div class="card">
@@ -750,25 +794,31 @@ function renderEditor(){
     </div>
 
     <div class="card">
-      <h3>💾 Backup, Export &amp; Print</h3>
-      <p class="muted" style="margin-top:-6px;">Download backups, sheets, or print full hard copies.</p>
+      <h3>💾 Backup &amp; export</h3>
+      <p class="muted" style="margin-top:-6px;">Keep a copy in case anything goes wrong, or hand data off to whoever takes over as BR next.</p>
       <div class="btn-row">
         <button class="btn ghost btn-sm" id="exportBackupBtn">⬇️ Download full backup (JSON)</button>
         <label class="file-input-label btn-sm">⬆️ Restore from backup<input type="file" id="restoreInput" accept="application/json"></label>
       </div>
       <div class="btn-row" style="margin-top:10px;">
         <button class="btn ghost btn-sm" id="exportSummaryBtn">⬇️ Attendance summary (CSV)</button>
+        <button class="btn ghost btn-sm" id="exportGridBtn">⬇️ Per-date grid (CSV)</button>
         <button class="btn ghost btn-sm" id="exportRawBtn">⬇️ Raw daily log (CSV)</button>
-        <button class="btn btn-sm" style="background:#0284c7;" onclick="window.print()">🖨️ Print Batch Sheet</button>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn ghost btn-sm" id="printFullBtn">📄 Printable full report</button>
       </div>
     </div>
   `;
 
+  // case presenter handlers
   document.getElementById('savePresenterBtn').onclick = async ()=>{
     const roll = document.getElementById('presenterSelect').value;
+    const date = document.getElementById('presenterDate').value;
+    const teacher = document.getElementById('presenterTeacher').value.trim();
     const topic = document.getElementById('presenterTopic').value.trim();
     if(!roll){ toast('Select a student first'); return; }
-    casePresenter = {roll, topic};
+    casePresenter = {roll, date, teacher, topic};
     await saveCasePresenter();
     toast('Case presenter set ✅');
     renderEditor();
@@ -781,6 +831,7 @@ function renderEditor(){
     renderEditor();
   };
 
+  // roster handlers
   document.getElementById('addRosterBtn').onclick = async ()=>{
     const raw = document.getElementById('bulkRoster').value.trim();
     if(!raw) return;
@@ -811,7 +862,7 @@ function renderEditor(){
   };
   el.querySelectorAll('[data-remove]').forEach(x=>{
     x.onclick = ()=>{
-      modalConfirm('Remove student?', `${x.dataset.remove} will be removed from the roster.`, async ()=>{
+      modalConfirm('Remove student?', `${x.dataset.remove} will be removed from the roster. Past attendance stays in the log but won't show under their name.`, async ()=>{
         students = students.filter(s=>s.roll!==x.dataset.remove);
         await saveStudents();
         toast('Student removed');
@@ -821,7 +872,7 @@ function renderEditor(){
   });
   el.querySelectorAll('[data-reset]').forEach(x=>{
     x.onclick = ()=>{
-      modalConfirm('Reset PIN?', `A new PIN will be generated for roll ${x.dataset.reset}.`, async ()=>{
+      modalConfirm('Reset PIN?', `A new PIN will be generated for roll ${x.dataset.reset}. Their old PIN will stop working — you'll need to share the new one with them.`, async ()=>{
         const st = students.find(s=>s.roll===x.dataset.reset);
         if(st){
           st.pin = genPin();
@@ -838,6 +889,11 @@ function renderEditor(){
     students.forEach(s=> rows.push([s.roll, s.name, s.pin||'']));
     downloadFile(`paedstrack-roster-pins-${todayStr()}.csv`, toCSV(rows), 'text/csv');
   };
+
+  renderAllStudentsTable(document.getElementById('rosterTableFilter').value);
+  document.getElementById('rosterTableFilter').oninput = (e)=> renderAllStudentsTable(e.target.value);
+  document.getElementById('sortLowBtn').onclick = ()=>{ tableSort='low'; renderEditor(); };
+  document.getElementById('sortRollBtn').onclick = ()=>{ tableSort='roll'; renderEditor(); };
 
   document.getElementById('entryDate').onchange = (e)=>{ startDraft(e.target.value); renderEditor(); };
 
@@ -866,6 +922,7 @@ function renderEditor(){
     renderEditor();
   };
 
+  // backup / export
   document.getElementById('exportBackupBtn').onclick = ()=>{
     const backup = { exportedAt: new Date().toISOString(), students, log };
     downloadFile(`peds-attendance-backup-${todayStr()}.json`, JSON.stringify(backup, null, 2), 'application/json');
@@ -893,32 +950,28 @@ function renderEditor(){
     reader.readAsText(file);
     e.target.value = '';
   };
-  
   document.getElementById('exportSummaryBtn').onclick = ()=>{
+    const rows = [['Roll No','Name','Sessions Held','Sessions Attended','Attendance %','Needed for 75%']];
+    students.forEach(s=>{
+      const st = studentStats(s.roll);
+      rows.push([s.roll, s.name, st.held, st.attended, st.pct, st.needed]);
+    });
+    downloadFile(`peds-attendance-summary-${todayStr()}.csv`, toCSV(rows), 'text/csv');
+  };
+  document.getElementById('exportGridBtn').onclick = ()=>{
     const sortedDates = Object.keys(log).sort();
     const headers = ['Roll No', 'Name'];
-    sortedDates.forEach(d => {
-      headers.push(`${d} (AM)`);
-      headers.push(`${d} (PM)`);
-    });
+    sortedDates.forEach(d => { headers.push(`${d} (AM)`); headers.push(`${d} (PM)`); });
     headers.push('Sessions Held', 'Sessions Attended', 'Attendance %', 'Needed for 75%');
     const rows = [headers];
     students.forEach(s => {
       const row = [s.roll, s.name];
       sortedDates.forEach(d => {
         const entry = log[d];
-        if (entry.morning?.status === 'held') {
-          const isAbs = entry.morning.absentees?.includes(s.roll);
-          row.push(isAbs ? 'A' : 'P');
-        } else {
-          row.push('—');
-        }
-        if (entry.evening?.status === 'held') {
-          const isAbs = entry.evening.absentees?.includes(s.roll);
-          row.push(isAbs ? 'A' : 'P');
-        } else {
-          row.push('—');
-        }
+        if(entry.morning?.status==='held'){ row.push((entry.morning.absentees||[]).includes(s.roll) ? 'A' : 'P'); }
+        else { row.push('—'); }
+        if(entry.evening?.status==='held'){ row.push((entry.evening.absentees||[]).includes(s.roll) ? 'A' : 'P'); }
+        else { row.push('—'); }
       });
       const st = studentStats(s.roll);
       row.push(st.held, st.attended, `${st.pct}%`, st.needed);
@@ -926,18 +979,20 @@ function renderEditor(){
     });
     downloadFile(`peds-attendance-grid-${todayStr()}.csv`, toCSV(rows), 'text/csv');
   };
-  
   document.getElementById('exportRawBtn').onclick = ()=>{
     const rows = [['Date','Session','Status','Absent Roll Numbers']];
     Object.keys(log).sort().forEach(d=>{
       const e = log[d];
       ['morning','evening'].forEach(s=>{
         if(e[s]){
-          rows.push([d, s, e[s].status, e[s].status==='held' ? (e[s].absentees ? e[s].absentees.join('; ') : '') : '']);
+          rows.push([d, s, e[s].status, e[s].status==='held' ? (e[s].absentees||[]).join('; ') : '']);
         }
       });
     });
     downloadFile(`peds-attendance-log-${todayStr()}.csv`, toCSV(rows), 'text/csv');
+  };
+  document.getElementById('printFullBtn').onclick = ()=>{
+    modalReportChoice('Full batch report', ()=>printReport(buildFullSummaryReportHTML()), ()=>imageReport(buildFullSummaryReportHTML(), `paedstrack-full-report-${todayStr()}.png`));
   };
 }
 
@@ -952,8 +1007,8 @@ function startDraft(dateVal){
 function renderChips(containerId, session){
   const c = document.getElementById(containerId);
   if(!c) return;
-  if(students.length===0){ c.innerHTML = `<p class="muted">Add students to the roster first.</p>`; return; }
   if(!session.absentees) session.absentees = [];
+  if(students.length===0){ c.innerHTML = `<p class="muted">Add students to the roster first.</p>`; return; }
   c.innerHTML = students.map(s=>{
     const isAbsent = session.absentees.includes(s.roll);
     return `<span class="student-chip ${isAbsent?'absent':''}" data-roll="${s.roll}">${isAbsent?'✕':'✓'} ${s.roll}</span>`;
@@ -972,13 +1027,14 @@ function renderHistory(){
   if(dates.length===0) return `<div class="empty-state"><div class="em">📭</div>No entries yet — add one above.</div>`;
   return dates.map(d=>{
     const e = log[d];
-    const mAbs = e.morning.absentees ? e.morning.absentees.length : 0;
-    const eAbs = e.evening.absentees ? e.evening.absentees.length : 0;
+    const mAbs = (e.morning.absentees||[]).length;
+    const eAbs = (e.evening.absentees||[]).length;
     const m = e.morning.status==='held' ? `AM ✓ (${mAbs} absent)` : 'AM cancelled';
     const ev = e.evening.status==='held' ? `PM ✓ (${eAbs} absent)` : 'PM cancelled';
-    return `<div class="log-row">
+    return `<div class="log-row" style="flex-wrap:wrap;">
       <span><b>${fmtNice(d)}</b><br><span class="muted">${m} · ${ev}</span></span>
       <span class="btn-row">
+        <button class="pill-btn btn-sm" data-report="${d}">📄 Report</button>
         <button class="pill-btn btn-sm" data-edit="${d}">Edit</button>
         <button class="pill-btn btn-sm" data-del="${d}" style="color:var(--red);">Delete</button>
       </span>
@@ -1002,8 +1058,13 @@ document.getElementById('tab-editor').addEventListener('click', (e)=>{
       renderEditor();
     });
   }
+  if(e.target.dataset.report){
+    const d = e.target.dataset.report;
+    modalReportChoice(`Daily report — ${fmtNice(d)}`, ()=>printReport(buildDailyReportHTML(d)), ()=>imageReport(buildDailyReportHTML(d), `attendance-${d}.png`));
+  }
 });
 
+// ---------- CSV / file helpers ----------
 function toCSV(rows){
   return rows.map(row => row.map(cell=>{
     const s = String(cell ?? '');
@@ -1020,6 +1081,90 @@ function downloadFile(filename, content, mime){
   toast('Download started ✅');
 }
 
+// ---------- print / image report engine ----------
+function printReport(html){
+  document.getElementById('printArea').innerHTML = `<div class="rpt">${html}</div>`;
+  setTimeout(()=> window.print(), 50);
+}
+async function imageReport(html, filename){
+  if(typeof html2canvas==='undefined'){ toast('Image export unavailable offline — try Print instead'); return; }
+  const area = document.getElementById('printArea');
+  area.innerHTML = `<div class="rpt">${html}</div>`;
+  area.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;background:#fff;';
+  await new Promise(r=>setTimeout(r,60));
+  try{
+    const canvas = await html2canvas(area.firstChild, {backgroundColor:'#ffffff', scale:2});
+    canvas.toBlob(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('Image saved ✅');
+    });
+  }catch(err){ toast('Could not generate image'); }
+  area.style.cssText = '';
+  area.innerHTML = '';
+}
+function reportHeader(subtitle){
+  return `<h2>🩺 PaedsTrack B1</h2><div class="rpt-sub">Paeds Unit 1 · Final Year MBBS · Batch B1${subtitle?' · '+subtitle:''}</div>`;
+}
+function buildDailyReportHTML(date){
+  const e = log[date];
+  if(!e) return reportHeader(fmtNice(date)) + `<p>No attendance recorded for this date.</p>`;
+  const sections = ['morning','evening'].map(s=>{
+    const label = s==='morning' ? '☀️ Morning session' : '🌙 Evening session';
+    if(e[s].status!=='held') return `<div class="rpt-section-title">${label}</div><p style="font-size:12.5px;color:var(--ink-soft);">Cancelled</p>`;
+    const absentRolls = e[s].absentees || [];
+    const present = students.filter(st=>!absentRolls.includes(st.roll));
+    const absent = students.filter(st=>absentRolls.includes(st.roll));
+    return `
+      <div class="rpt-section-title">${label}</div>
+      <div class="rpt-grid">
+        <div class="rpt-box"><div class="rpt-count" style="color:#15803d;">${present.length}</div><div style="font-size:11px;color:var(--ink-soft);">Present</div></div>
+        <div class="rpt-box"><div class="rpt-count" style="color:#b91c1c;">${absent.length}</div><div style="font-size:11px;color:var(--ink-soft);">Absent</div></div>
+      </div>
+      <div class="rpt-rolls"><b>Absent roll no.:</b> ${absent.length? absent.map(s=>s.roll).join(', ') : 'None'}</div>
+    `;
+  }).join('');
+  return `${reportHeader(fmtNice(date))}${sections}<div class="rpt-foot">Generated by BR via PaedsTrack B1 · ${new Date().toLocaleString('en-GB')}<br><br>BR signature: ______________________</div>`;
+}
+function buildFullSummaryReportHTML(){
+  const rows = students.map(s=>{
+    const st = studentStats(s.roll);
+    const c = tableColor(st.pct);
+    return `<div class="rpt-row"><span>${s.roll} — ${s.name}</span><span style="font-weight:700;color:${st.held===0?'var(--ink-soft)':c.fg}">${st.held===0?'—':st.pct+'%'} (${st.attended}/${st.held})</span></div>`;
+  }).join('');
+  const bs = batchStats();
+  return `${reportHeader('Full attendance summary')}
+    <div class="rpt-grid">
+      <div class="rpt-box"><div class="rpt-count">${bs.heldSessions}</div><div style="font-size:11px;color:var(--ink-soft);">Sessions held</div></div>
+      <div class="rpt-box"><div class="rpt-count">${bs.avgPct}%</div><div style="font-size:11px;color:var(--ink-soft);">Batch average</div></div>
+    </div>
+    <div class="rpt-section-title">Per-student attendance</div>
+    ${rows}
+    <div class="rpt-foot">Green = at/above 75% target · Red = below target · Generated ${new Date().toLocaleString('en-GB')}</div>`;
+}
+function buildStudentReportHTML(student){
+  const st = studentStats(student.roll);
+  const dates = Object.keys(log).sort();
+  const rows = dates.map(d=>{
+    const status = studentDayStatus(log[d], student.roll);
+    if(status==='none') return '';
+    const tick = status==='present' ? '✓✓ Present' : status==='partial' ? '✓ Partial' : '✕ Absent';
+    return `<div class="rpt-row"><span>${fmtNice(d)}</span><span>${tick}</span></div>`;
+  }).join('');
+  return `${reportHeader(`${student.roll} — ${student.name}`)}
+    <div class="rpt-grid">
+      <div class="rpt-box"><div class="rpt-count" style="color:${tableColor(st.pct).fg}">${st.held===0?'—':st.pct+'%'}</div><div style="font-size:11px;color:var(--ink-soft);">Attendance</div></div>
+      <div class="rpt-box"><div class="rpt-count">${st.attended}/${st.held}</div><div style="font-size:11px;color:var(--ink-soft);">Sessions</div></div>
+    </div>
+    <div class="rpt-section-title">Day-by-day (✓✓ = both sessions, ✓ = one session)</div>
+    ${rows || '<p style="font-size:12.5px;color:var(--ink-soft);">No sessions recorded yet.</p>'}
+    <div class="rpt-foot">Generated ${new Date().toLocaleString('en-GB')}</div>`;
+}
+
+// ---------- init ----------
 (async function init(){
   await loadAll();
   renderBRStatus();
