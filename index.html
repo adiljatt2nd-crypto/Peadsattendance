@@ -74,7 +74,7 @@
   .cal-head button{border:none;background:var(--gray-light);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .cal-dow{font-size:10.5px;font-weight:700;color:var(--ink-soft);text-align:center;padding-bottom:4px;}
-  .cal-day{aspect-ratio:1;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;gap:1px;}
+  .cal-day{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;gap:1px;}
   .cal-day.empty{visibility:hidden;}
   .cal-day.present{background:var(--green);color:#fff;}
   .cal-day.absent{background:var(--red);color:#fff;}
@@ -88,22 +88,7 @@
   .cal-day.has-sched:hover{outline:2px solid var(--amber);}
 
   #printArea{display:none;}
-  .rpt{font-family:'Inter',sans-serif;color:var(--ink);width:480px;padding:24px;background:#fff;position:relative;}
-  .rpt.wide{display:inline-block;width:auto;}
-  table.matrix{border-collapse:collapse;font-size:10.5px;white-space:nowrap;margin-top:4px;}
-  table.matrix th, table.matrix td{padding:5px 7px;text-align:center;border:1px solid var(--border);}
-  table.matrix thead th{background:var(--gray-light);font-weight:700;font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
-  table.matrix thead th.sub{font-size:9px;padding:3px 6px;}
-  table.matrix td.mx-name{text-align:left;font-weight:700;background:#fff;}
-  table.matrix th.mx-name-h{text-align:left;}
-  table.matrix td.mx-pct{font-weight:800;font-family:'Poppins',sans-serif;}
-  table.matrix td.mx-p{color:#15803d;font-weight:800;background:#f0fdf4;}
-  table.matrix td.mx-a{color:#b91c1c;font-weight:800;background:#fef2f2;}
-  table.matrix td.mx-c{color:#94a3b8;font-weight:700;background:#f8fafc;}
-  .date-box{position:absolute;top:20px;right:20px;background:var(--teal-dark);color:#fff;border-radius:12px;padding:7px 12px;text-align:center;}
-  .date-box .dow{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.75;}
-  .date-box .dnum{font-family:'Poppins',sans-serif;font-size:18px;font-weight:800;line-height:1.05;}
-  .date-box .mon{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9;}
+  .rpt{font-family:'Inter',sans-serif;color:var(--ink);width:480px;padding:24px;background:#fff;}
   .rpt .rpt-dept{font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--amber);text-transform:uppercase;margin-bottom:3px;}
   .rpt h2{font-family:'Poppins',sans-serif;font-size:17px;margin:0 0 2px;color:var(--teal-dark);}
   .rpt .rpt-sub{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
@@ -303,7 +288,7 @@ const SEED_SCHEDULE = [
   {date:'2026-08-06', teachers:'Dr. M Ahsan Bajwa, Dr. Sadia Shakoor', am:'Case Presentation 245', pm:'Case Presentation 286', presenter:''},
   {date:'2026-08-07', teachers:'Dr. Shaffaq Aziz / Dr. Samia Aslam', am:'CPC', pm:'', presenter:''},
   {date:'2026-08-08', teachers:'Dr. M Ahsan Bajwa (OPD), Dr. Shabana Tehreem / Dr. Sadia Shakoor', am:'Case Presentation 247', pm:'Case Presentation 245', presenter:''},
-  {date:'2026-10-10', teachers:'', am:'Ward Test', pm:'', presenter:''}
+  {date:'2026-08-10', teachers:'', am:'Ward Test', pm:'', presenter:''}
 ];
 
 let students = [];
@@ -404,7 +389,7 @@ function toast(msg){
   setTimeout(()=>t.classList.remove('show'), 2400);
 }
 
-function closeModal(); document.getElementById('modalRoot').innerHTML = ''; }
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 
 function modalPinEntry(){
   const root = document.getElementById('modalRoot');
@@ -1318,7 +1303,7 @@ function renderEditor(){
     downloadFile(`peds-attendance-log-${todayStr()}.csv`, toCSV(rows), 'text/csv');
   };
   document.getElementById('printFullBtn').onclick = ()=>{
-    modalReportChoice('Full batch report', ()=>printReport(buildFullSummaryReportHTML(), true), ()=>imageReport(buildFullSummaryReportHTML(), `paedstrack-full-report-${todayStr()}.png`, true));
+    modalReportChoice('Full batch report', ()=>printReport(buildFullSummaryReportHTML()), ()=>imageReport(buildFullSummaryReportHTML(), `paedstrack-full-report-${todayStr()}.png`));
   };
 }
 
@@ -1406,14 +1391,14 @@ function downloadFile(filename, content, mime){
   toast('Download started ✅');
 }
 
-function printReport(html, wide){
-  document.getElementById('printArea').innerHTML = `<div class="rpt${wide?' wide':''}">${html}</div>`;
+function printReport(html){
+  document.getElementById('printArea').innerHTML = `<div class="rpt">${html}</div>`;
   setTimeout(()=> window.print(), 50);
 }
-async function imageReport(html, filename, wide){
+async function imageReport(html, filename){
   if(typeof html2canvas==='undefined'){ toast('Image export unavailable offline — try Print instead'); return; }
   const area = document.getElementById('printArea');
-  area.innerHTML = `<div class="rpt${wide?' wide':''}">${html}</div>`;
+  area.innerHTML = `<div class="rpt">${html}</div>`;
   area.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;background:#fff;';
   await new Promise(r=>setTimeout(r,60));
   try{
@@ -1433,17 +1418,9 @@ async function imageReport(html, filename, wide){
 function reportHeader(subtitle){
   return `<div class="rpt-dept">Department of Paediatrics Medicine, Unit 1</div><h2>🩺 PaedsTrack B1</h2><div class="rpt-sub">Final Year MBBS · Batch B1${subtitle?' · '+subtitle:''}</div>`;
 }
-function dateCornerBox(dateStr, topLabel){
-  const dt = new Date(dateStr+'T00:00:00');
-  const dow = topLabel || dt.toLocaleDateString('en-GB',{weekday:'short'});
-  const dnum = dt.getDate();
-  const mon = dt.toLocaleDateString('en-GB',{month:'short'});
-  return `<div class="date-box"><div class="dow">${dow}</div><div class="dnum">${dnum}</div><div class="mon">${mon}</div></div>`;
-}
 function buildDailyReportHTML(date){
   const e = log[date];
-  const box = dateCornerBox(date);
-  if(!e) return box + reportHeader(fmtNice(date)) + `<p>No attendance recorded for this date.</p>`;
+  if(!e) return reportHeader(fmtNice(date)) + `<p>No attendance recorded for this date.</p>`;
   const sections = ['morning','evening'].map(s=>{
     const label = s==='morning' ? '☀️ MORNING SESSION' : '🌙 EVENING SESSION';
     if(e[s].status!=='held') return `<div class="rpt-section-title">${label} — CANCELLED</div><p class="rpt-cancelled-note">No session held.</p>`;
@@ -1466,45 +1443,23 @@ function buildDailyReportHTML(date){
       </div>
     `;
   }).join('');
-  return `${box}${reportHeader(fmtNice(date))}${sections}<div class="rpt-foot">Generated by BR via PaedsTrack B1 · ${new Date().toLocaleString('en-GB')}</div>`;
+  return `${reportHeader(fmtNice(date))}${sections}<div class="rpt-foot">Generated by BR via PaedsTrack B1 · ${new Date().toLocaleString('en-GB')}</div>`;
 }
 function buildFullSummaryReportHTML(){
-  const bs = batchStats();
-  const dates = Object.keys(log).sort();
-  const headDates = dates.map(d=>{
-    const dt = new Date(d+'T00:00:00');
-    return `<th colspan="2">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</th>`;
-  }).join('');
-  const subHead = dates.map(()=> `<th class="sub">AM</th><th class="sub">PM</th>`).join('');
-  const cellFor = (d, roll)=>{
-    const info = log[d];
-    return ['morning','evening'].map(sess=>{
-      const s = info[sess];
-      if(!s || s.status!=='held') return `<td class="mx-c">–</td>`;
-      const present = !(s.absentees||[]).includes(roll);
-      return present ? `<td class="mx-p">P</td>` : `<td class="mx-a">A</td>`;
-    }).join('');
-  };
   const rows = students.map(s=>{
     const st = studentStats(s.roll);
     const c = tableColor(st.pct);
-    const cells = dates.map(d=>cellFor(d, s.roll)).join('');
-    return `<tr><td class="mx-name">${s.roll} — ${s.name}</td><td class="mx-pct" style="color:${st.held===0?'var(--ink-soft)':c.fg}">${st.held===0?'—':st.pct+'%'}</td>${cells}</tr>`;
+    return `<div class="rpt-row"><span>${s.roll} — ${s.name}</span><span style="font-weight:700;color:${st.held===0?'var(--ink-soft)':c.fg}">${st.held===0?'—':st.pct+'%'} (${st.attended}/${st.held})</span></div>`;
   }).join('');
-  return `${dateCornerBox(todayStr(),'as of')}${reportHeader('Full attendance summary')}
-    <div class="rpt-two-col">
-      <div class="rpt-col"><div class="rpt-col-count" style="color:var(--teal-dark);">${bs.heldSessions}</div><div class="rpt-col-lbl">Sessions held</div></div>
-      <div class="rpt-col"><div class="rpt-col-count" style="color:var(--teal-dark);">${bs.avgPct}%</div><div class="rpt-col-lbl">Batch average</div></div>
+  const bs = batchStats();
+  return `${reportHeader('Full attendance summary')}
+    <div class="rpt-grid">
+      <div class="rpt-box"><div class="rpt-count">${bs.heldSessions}</div><div style="font-size:11px;color:var(--ink-soft);">Sessions held</div></div>
+      <div class="rpt-box"><div class="rpt-count">${bs.avgPct}%</div><div style="font-size:11px;color:var(--ink-soft);">Batch average</div></div>
     </div>
-    <div class="rpt-section-title">Per-student attendance — day by day</div>
-    <table class="matrix">
-      <thead>
-        <tr><th class="mx-name-h">Student</th><th>%</th>${headDates}</tr>
-        <tr><th></th><th></th>${subHead}</tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="rpt-foot">P = present (green) · A = absent (red) · – = session cancelled · Generated ${new Date().toLocaleString('en-GB')}</div>`;
+    <div class="rpt-section-title">Per-student attendance</div>
+    ${rows}
+    <div class="rpt-foot">Green = at/above 75% target · Red = below target · Generated ${new Date().toLocaleString('en-GB')}</div>`;
 }
 function buildStudentReportHTML(student){
   const st = studentStats(student.roll);
